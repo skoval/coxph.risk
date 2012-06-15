@@ -1,14 +1,14 @@
-# CONSIDERATION OF STARTIFICATION
-projection.relrisk <- function(object, coxph.object){
+projection.relrisk <- function(object, data){
 	
-	if(is.data.frame(x))
-		return(coxph.relrisk.uncentered(coxph.object, object))
-	else if (is.numeric(x))
-		return(x)
-	else if (class(object)=="coxph")
-		return(coxph.relrisk.uncentered(coxph.object)) # DEFAULT RETURNS RELRISKS FOR DATASETS
-	else
-		stop(cat("No method for class ",class(object)))
+	if (is.numeric(object))
+		return(object)
+  else if (class(object)=="coxph")
+      if (missing(data))
+  		  return(coxph.relrisk.uncentered(object)) # RETURNS RELRISKS FOR FULL DATASET
+	    else
+	      return(coxph.relrisk.uncentered(object, data))
+  else
+		stop(cat("No method for class",class(object)))
 	
 }
 
