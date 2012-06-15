@@ -1,0 +1,1 @@
+This project is intended to extend the R survival package with methods for absolute risk estimation. Absolute risk is the probability of failure between time A and time B in the presence of competing events. The projects goal is to provide methods that will allow for individualized hazard functions for each event through a Cox proportional model.
