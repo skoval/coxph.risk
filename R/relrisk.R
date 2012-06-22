@@ -27,5 +27,3 @@ coxph.relrisk.uncentered <- function(coxph.object, newdata){
 exp(lp+center)	
 }
 
-
-
