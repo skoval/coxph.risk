@@ -189,17 +189,17 @@ cox3 <- coxph(Surv(time, competing2)~x1, data = test)
 
 Although the covariates are not associated with any of the event times, we have fit different hazard models for each to emphasize that the models need not share risk factors or in any way be dependent on each other.
 
-To make the absolute risk calculation, in addition to the Cox models, we must specify the projection interval and the risk type for the individual for whom the projection is being made. The risk type is determined by the covariate pattern, which is supplied by a data frame containing the variables in each of the primary event and competing event models. Currently, the function supports the risk calculation for only a single risk type.
+To make the absolute risk calculation, in addition to the Cox models, we must specify the projection interval and the risk type for the individual for whom the projection is being made. The risk type is determined by the covariate pattern, which is supplied by a data frame containing the variables in each of the primary event and competing event models. 
 
 In the following, we compute several risk predictions for the risk type corresponding to the first row of the `test` data set. The primary event is indicated by the order of the Cox models, with the first position designating the primary event.
 
-For this example, we show the syntax for estimating the absolute risk of disease between time [0, 1), for an individual with no exposures (the reference group).
+For this example, we show the syntax for estimating the absolute risk of disease between time [0, 1), for an individual with no exposures (the reference group). The projection interval is specified with the argument `interval`, which is a two-element vector. The risk profile information is given as `newdata`. 
 
 
 ```{r}
 temp <- test[1,]
 temp[1,c("x1", "x2", "x3")] <- rep(0, 3)
-coxph.risk(0, 1, projection.data=temp, cox1, cox2, cox3)
+coxph.risk(c(0,1), newdata=temp, cox1, cox2, cox3)
 ```
 
 This can be compared to the analytic risk calculation for the exponential model with baseline hazard rates used to simulate the `test` data set.
@@ -211,13 +211,20 @@ cox.exp(0, 1, lambdas)
 By changing the period of risk we see how surviving to the beginning of the projection interval impacts risk.
 
 ```{r}
-coxph.risk(.2, 1, projection.data=temp, cox1, cox2, cox3)
-coxph.risk(.4, 1, projection.data=temp, cox1, cox2, cox3)
-coxph.risk(.6, 1, projection.data=temp, cox1, cox2, cox3)
+coxph.risk(c(.2,1), newdata=temp, cox1, cox2, cox3)
+coxph.risk(c(.4,1), newdata=temp, cox1, cox2, cox3)
+coxph.risk(c(.6,1), newdata=temp, cox1, cox2, cox3)
 ```
 
 ```{r}
 cox.exp(.2, 1, lambdas)
 cox.exp(.4, 1, lambdas)
 cox.exp(.6, 1, lambdas)
+```
+
+
+As with `predict.glm`, we can obtain predictions for multiple individuals over a given time interval with additional rows in `newdata`. Note that the default action for handling missing variables is to apply `na.exclude` to the subset of variables included in the primary event and competing event models.
+
+```{r}
+coxph.risk(c(0,1), test[1:5,], cox1, cox2, cox3)
 ```

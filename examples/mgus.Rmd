@@ -1,0 +1,77 @@
+Example of absolute risk estimation with MGUS dataset
+--------------------------------------------------
+
+Monoclonal gammopathy of undetermined significance (MGUS) is an asymptomatic condition that is 
+characterized by a shift in the distribution of isotypes of immunogloblin, such that
+one isotype is predominately manufactured. MGUS is believed to be an intermediate stage before
+development of multiple myeloma, although most individuals diagnosed with MGUS will never develop
+this cancer. Dr. Robert Kyle's study of a Mayo Clinic cohort was the first pioneering study of the
+natural history of MGUS. 
+
+In the following, we examine the outcomes for 241 of the Mayo Clinic patients, consisting of individuals
+diagnosed with MGUS between the years 1956 and 1973 whose outcomes were determined 20 to 35
+years after diagnosis. Our goal is to estimate the absolute risk of multiple myeloma following MGUS, 
+given competing risks of death or other plasma cell malignancy. The first step of the absolute risk
+calculation is to specify a relative risk model for each event type. Here, we consider Cox models and
+determine risk factors among the following baseline variables as measured at the time of diagnosis: age,
+gender, albumin, hemoglobin, and magnitude of monoclonal protein spike. Because a number of subjects
+did not have a measured creatinine level, this measure was not considered in this set of analyses.
+
+```{r}
+library(survival)
+library(coxph.risk)
+
+data(mgus) # mgus2 has competing risk structure
+
+# YEARS TO EVENT TYPE
+
+S1 <- survfit(Surv(time, status)~1, data=mgus2,subset=event=="myeloma")
+S2 <- survfit(Surv(time, status)~1, data=mgus2,subset=event=="death")
+S3 <- survfit(Surv(time, status)~1, data=mgus2,subset=event=="other")
+```
+
+There were `r sum(S1$n.event)` cases of multiple myeloma, `r sum(S2$n.event)` deaths, and
+`r sum(S3$n.event)` cases of other plasma malignancy during the 20 to 35 year follow-up. Because of the
+risk of death, we expect that the absolute risk (crude risk or cumulative incidence)
+of myeloma for intervals spanning multiple years after MGUS diagnosis could differ substantially from net risk. 
+
+We can take a simple look at this with a small example. The net risk for myeloma within the first ten years
+of diagnosis after MGUS is the estimated absolute risk if all competing events were eliminated. This can
+be estimated non-parametrically by taking the product of the hazard and survival estimates over the
+projection interval.
+
+```{r}
+end <- 365.25*10
+
+# EVENT TIMES IN INTERVAL
+sfit <- summary(S1)
+sfit$h <- c(-log(sfit$surv[1]),diff(-log(sfit$surv))) # hazard estimates 
+i <- which(sfit$time<end)
+
+net.risk <- sum(sfit$h[i]*sfit$surv[i])
+```
+The net ten-year risk of multiple myeloma is `r round(net.risk*100,1)`. If we now, determine the absolute risk
+taking into account the competing of death and, for now, ignoring the impact of other plasma cell malignancies,
+we need to include the probability of overall survival at each event time.
+
+
+```{r}
+dfit <- summary(S2, time=sfit$time[i])
+crude.risk <- sum(sfit$h[i]*sfit$surv[i]*dfit$surv)
+```
+
+With a fully nonparametric analysis, results in an absolute risk of 
+`r round(crude.risk*100,1)`. Thus the impact of death resulted in a `r round((net.risk-crude.risk)*100,1)` absolute
+reduction in the risk of myeloma.
+
+
+```{r}
+base.model <- Surv(time, status)~age+factor(sex)+
+                                alb+hgb+mspike
+
+cox1 <- coxph(base.model,data=mgus2,subset=event=="myeloma")
+cox2 <- coxph(base.model,data=mgus2,subset=event=="death")
+cox3 <- coxph(base.model,data=mgus2,subset=event=="other")
+
+coxph.risk(c(0, end), newdata=mgus2[1,], cox1, cox2, cox3)
+```

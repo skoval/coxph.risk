@@ -210,7 +210,7 @@ hljs.initHighlightingOnLoad();
 
 <p>where \( \hat{S}_{0i}(u) \) is the cause-specific baseline survival function and \( \hat{\lambda}_{01}(u) \) the primary-event baseline hazard function at time \( u \). </p>
 
-<p>When the Cox proportional hazard is used for the relative risk model, each of the components for the absolute risk can be readily computed from most standard software packages. The <code>coxph.risk</code> puts all of the steps together for this case using a  Nelson-Aalen estimator<a href="http://www.jstor.org/stable/10.2307/2958557">(Aalen 1978)</a> for the cause-specific baseline hazard function of each failure type. </p>
+<p>When the Cox proportional hazard is used for the relative risk model, each of the components for the absolute risk can be readily computed from most standard software packages. The <code>coxph.risk</code> puts all of the steps together for this case using a  Nelson-Aalen estimator <a href="http://www.jstor.org/stable/10.2307/2958557">(Aalen 1978)</a> for the cause-specific baseline hazard function of each failure type. </p>
 
 <hr/>
 
@@ -272,18 +272,18 @@ head(data)
 </code></pre>
 
 <pre><code>##         T1    T2
-## [1,] 1.393 2.387
-## [2,] 3.145 2.122
-## [3,] 2.450 1.810
-## [4,] 2.108 4.411
-## [5,] 1.686 1.070
-## [6,] 1.269 4.363
+## [1,] 2.345 2.805
+## [2,] 1.373 3.844
+## [3,] 1.345 4.681
+## [4,] 1.697 4.823
+## [5,] 1.603 1.681
+## [6,] 1.245 1.051
 </code></pre>
 
 <pre><code class="r">mean(data[, 1] &lt; data[, 2] &amp; data[, 1] &gt;= 1 &amp; data[, 1] &lt; 3)
 </code></pre>
 
-<pre><code>## [1] 0.6391
+<pre><code>## [1] 0.6409
 </code></pre>
 
 <p>Now, we check this against the analytic result.</p>
@@ -321,7 +321,7 @@ head(data)
 }
 </code></pre>
 
-<p>From this, we can construct a test data frame with 10,000 observations, one disease event and two competing risks. We will assume no loss to follow-up. We use <code>pmin</code> to identify the earliest time out of each row&#39;s disease and competing events. The earliest time is the only observed time for each observation (that&#39;s what makes them competing events!). It will be the observed time for one of the event types and the censoring time for all others.</p>
+<p>From this, we can construct a test data frame with 3,000 observations, one disease event and two competing risks. We will assume no loss to follow-up. We use <code>pmin</code> to identify the earliest time out of each row&#39;s disease and competing events. The earliest time is the only observed time for each observation (that&#39;s what makes them competing events!). It will be the observed time for one of the event types and the censoring time for all others.</p>
 
 <pre><code class="r">lambdas &lt;- c(2, 0.3, 0.5)
 times &lt;- rcox.exp(n = 3000, lambdas)
@@ -336,13 +336,13 @@ test &lt;- data.frame(time = min.time, disease = times[, 1] == min.time,
 head(test)
 </code></pre>
 
-<pre><code>##      time disease competing1 competing2      x1      x2 x3
-## 1 0.04259    TRUE      FALSE      FALSE  0.5341 0.23114  0
-## 2 0.29454    TRUE      FALSE      FALSE  0.3914 0.31599  0
-## 3 0.40867   FALSE      FALSE       TRUE  0.4941 0.04549  0
-## 4 0.37190    TRUE      FALSE      FALSE -0.7755 0.67611  0
-## 5 0.15547    TRUE      FALSE      FALSE -1.1249 0.39124  0
-## 6 0.13071    TRUE      FALSE      FALSE  0.1208 0.02004  0
+<pre><code>##      time disease competing1 competing2       x1      x2 x3
+## 1 0.01102   FALSE       TRUE      FALSE  0.11787 0.81941  0
+## 2 0.19447    TRUE      FALSE      FALSE  2.73868 0.74173  0
+## 3 0.08964    TRUE      FALSE      FALSE  0.53568 0.77613  0
+## 4 0.16237    TRUE      FALSE      FALSE -0.01552 0.06505  0
+## 5 1.47878    TRUE      FALSE      FALSE -0.30205 0.25940  1
+## 6 0.58227    TRUE      FALSE      FALSE  0.56226 0.82469  1
 </code></pre>
 
 <hr/>
@@ -379,21 +379,21 @@ fit3 &lt;- survreg(Surv(time, competing2) ~ x1 + x2 + x3, dist = &quot;exponenti
 </code></pre>
 
 <pre><code>## (Intercept) 
-##       2.078 
+##        2.09 
 </code></pre>
 
 <pre><code class="r">1/exp(coef(fit2)[1])
 </code></pre>
 
 <pre><code>## (Intercept) 
-##      0.2627 
+##      0.2863 
 </code></pre>
 
 <pre><code class="r">1/exp(coef(fit3)[1])
 </code></pre>
 
 <pre><code>## (Intercept) 
-##      0.5088 
+##      0.5241 
 </code></pre>
 
 <p>The first step in the absolute risk calculation is fitting the relative risk models. Here we suppose that the following Cox proportional hazards models were the selected relative risk models for each event type.</p>
@@ -405,18 +405,19 @@ cox3 &lt;- coxph(Surv(time, competing2) ~ x1, data = test)
 
 <p>Although the covariates are not associated with any of the event times, we have fit different hazard models for each to emphasize that the models need not share risk factors or in any way be dependent on each other.</p>
 
-<p>To make the absolute risk calculation, in addition to the Cox models, we must specify the projection interval and the risk type for the individual for whom the projection is being made. The risk type is determined by the covariate pattern, which is supplied by a data frame containing the variables in each of the primary event and competing event models. Currently, the function supports the risk calculation for only a single risk type.</p>
+<p>To make the absolute risk calculation, in addition to the Cox models, we must specify the projection interval and the risk type for the individual for whom the projection is being made. The risk type is determined by the covariate pattern, which is supplied by a data frame containing the variables in each of the primary event and competing event models. </p>
 
 <p>In the following, we compute several risk predictions for the risk type corresponding to the first row of the <code>test</code> data set. The primary event is indicated by the order of the Cox models, with the first position designating the primary event.</p>
 
-<p>For this example, we show the syntax for estimating the absolute risk of disease between time [0, 1), for an individual with no exposures (the reference group).</p>
+<p>For this example, we show the syntax for estimating the absolute risk of disease between time [0, 1), for an individual with no exposures (the reference group). The projection interval is specified with the argument <code>interval</code>, which is a two-element vector. The risk profile information is given as <code>newdata</code>. </p>
 
 <pre><code class="r">temp &lt;- test[1, ]
 temp[1, c(&quot;x1&quot;, &quot;x2&quot;, &quot;x3&quot;)] &lt;- rep(0, 3)
-coxph.risk(0, 1, projection.data = temp, cox1, cox2, cox3)
+coxph.risk(c(0, 1), newdata = temp, cox1, cox2, cox3)
 </code></pre>
 
-<pre><code>## [1] 0.6823
+<pre><code>##      1 
+## 0.6752 
 </code></pre>
 
 <p>This can be compared to the analytic risk calculation for the exponential model with baseline hazard rates used to simulate the <code>test</code> data set.</p>
@@ -429,22 +430,25 @@ coxph.risk(0, 1, projection.data = temp, cox1, cox2, cox3)
 
 <p>By changing the period of risk we see how surviving to the beginning of the projection interval impacts risk.</p>
 
-<pre><code class="r">coxph.risk(0.2, 1, projection.data = temp, cox1, cox2, cox3)
+<pre><code class="r">coxph.risk(c(0.2, 1), newdata = temp, cox1, cox2, cox3)
 </code></pre>
 
-<pre><code>## [1] 0.649
+<pre><code>##     1 
+## 0.628 
 </code></pre>
 
-<pre><code class="r">coxph.risk(0.4, 1, projection.data = temp, cox1, cox2, cox3)
+<pre><code class="r">coxph.risk(c(0.4, 1), newdata = temp, cox1, cox2, cox3)
 </code></pre>
 
-<pre><code>## [1] 0.6081
+<pre><code>##      1 
+## 0.5653 
 </code></pre>
 
-<pre><code class="r">coxph.risk(0.6, 1, projection.data = temp, cox1, cox2, cox3)
+<pre><code class="r">coxph.risk(c(0.6, 1), newdata = temp, cox1, cox2, cox3)
 </code></pre>
 
-<pre><code>## [1] 0.5118
+<pre><code>##      1 
+## 0.4509 
 </code></pre>
 
 <pre><code class="r">cox.exp(0.2, 1, lambdas)
@@ -463,6 +467,15 @@ coxph.risk(0, 1, projection.data = temp, cox1, cox2, cox3)
 </code></pre>
 
 <pre><code>## [1] 0.4812
+</code></pre>
+
+<p>As with <code>predict.glm</code>, we can obtain predictions for multiple individuals over a given time interval with additional rows in <code>newdata</code>. Note that the default action for handling missing variables is to apply <code>na.exclude</code> to the subset of variables included in the primary event and competing event models.</p>
+
+<pre><code class="r">coxph.risk(c(0, 1), test[1:5, ], cox1, cox2, cox3)
+</code></pre>
+
+<pre><code>##      1      2      3      4      5 
+## 0.6635 0.6658 0.6643 0.6743 0.6752 
 </code></pre>
 
 </body>
