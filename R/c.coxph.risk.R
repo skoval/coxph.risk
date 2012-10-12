@@ -1,7 +1,7 @@
 # CONCATENATE COXPH.OBJECTS
 c.coxph.risk <- function(coxph,...){
   models <- list(coxph)
-  if(!is.null(..1))
+  if(!missing(..1))
     models <- c(models, list(...))
   models  
 }

@@ -27,3 +27,13 @@ coxph.relrisk.uncentered <- function(coxph.object, newdata){
 exp(lp+center)	
 }
 
+# GET COXPH DESIGN MATRIX, REMOVING INTERCEPT
+model.matrix.coxph.risk <- function(model, data){
+	
+	X <- model.matrix(model$formula, data)
+	
+	if(length(grep("Intercept",colnames(X)))>0)
+		X[,-1]
+	else
+	X
+}

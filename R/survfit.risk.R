@@ -1,5 +1,35 @@
 # DETERMINE BASELINE SURVIVAL FROM SURVFIT
 # ALLOW FOR SUBSETTING TO MAX.TIME WITH/WITHOUT STRICT INCLUSION OF MAX.TIME
+# GIVEN SET OF EVENT TIMES COMPUTE THE BASELINE, SURVIVAL AND HAZARD
+# IGNORE STRATA FOR NOW
+
+
+basehaz.coxph.risk <- function(object, times){
+  
+  sfit <- summary(survfit(object), time=times, extend=TRUE)
+  H <- -log(sfit$surv)
+  z0 <- object$means
+  bz0 <- sum(z0 * coef(object))
+  H <- H * exp(-bz0)
+  S <- exp(-H) # BASELINE
+  h <- c(H[1],diff(H))
+  
+h
+}
+
+old.baseline.survfit <- function(object, times){
+  
+  sfit <- summary(survfit(object), time=times, extend=TRUE)
+  H <- -log(sfit$surv)
+  z0 <- object$means
+  bz0 <- sum(z0 * coef(object))
+  H <- H * exp(-bz0)
+  S <- exp(-H) # BASELINE
+  h <- c(H[1],diff(H))
+  
+data.frame(surv=S,haz=h,time=sfit$time)
+}
+
 baseline.survfit <- function(object, max.time, include = TRUE){
   
   sfit <- survfit(object)

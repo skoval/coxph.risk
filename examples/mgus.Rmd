@@ -64,14 +64,27 @@ With a fully nonparametric analysis, results in an absolute risk of
 `r round(crude.risk*100,1)`. Thus the impact of death resulted in a `r round((net.risk-crude.risk)*100,1)` absolute
 reduction in the risk of myeloma.
 
+The nonparametric absolute risk can be determined directly with the `survfit.risk` function. After obtaining the primary event and competing event `survfit` objects, the absolute risk estimate for a given time interval [begin, end) can be obtained as follows:
+
+```{r}
+survfit.risk(0, 5*365.25, S1, S2, S3)
+```
+
+To specify multiple event times, use vector arguments for the `begin` and `end`. In what follows, we look at the absolute risk of death within 1 to 10 years of MGUS diagnosis in yearly intervals.
+
+```{r}
+survfit.risk(rep(0,10), 1:10*365.25, S2, S1, S3)
+```
+
+For semiparametric estimates of risk, where we can introduce the impact of risk factors through Cox's proportional hazards model, we would use the function `coxph.risk`. The syntax is similar to `survfit.risk` only the modeling objects are of the `coxph` class.
 
 ```{r}
 base.model <- Surv(time, status)~age+factor(sex)+
-                                alb+hgb+mspike
+                                  alb+hgb+mspike
 
 cox1 <- coxph(base.model,data=mgus2,subset=event=="myeloma")
 cox2 <- coxph(base.model,data=mgus2,subset=event=="death")
 cox3 <- coxph(base.model,data=mgus2,subset=event=="other")
 
-coxph.risk(c(0, end), newdata=mgus2[1,], cox1, cox2, cox3)
+coxph.risk(0, end, newdata=mgus2[1,], cox1, cox2, cox3)
 ```

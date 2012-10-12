@@ -131,7 +131,7 @@ From this, we can construct a test data frame with 3,000 observations, one disea
 
 ```{r}
 lambdas <- c(2, .3, .5)
-times <- rcox.exp(n=3000, lambdas)
+times <- rcox.exp(n=2000, lambdas)
 
 min.time  <- pmin(times[,1],times[,2],times[,3])
 
@@ -153,7 +153,7 @@ head(test)
 Estimating absolute risk with `coxph.risk`
 ========================================================
 
-The `coxph.risk` computes the absolute risk of an event occurring between time [time0, time1) in the presence of competing events and given event-free survival up to time time0. Although the absolute risk estimator (of section?) can apply to a more general class of relative risk models, including models with non-linear effects, the `coxph.risk` implementation is for the Cox proportional hazards model only. 
+The `coxph.risk` computes the absolute risk of an event occurring between time [time0, time1) in the presence of competing events and given event-free survival up to time time0. Although the absolute risk estimator can apply to a more general class of relative risk models, including models with non-linear effects, the `coxph.risk` implementation is for the Cox proportional hazards model only. 
 
 To demonstrate the usage of this function, we will compute predicted risks based on the `test` data set created in the example above. The `test` data set contains outcomes for three time-to-events, which each follow a Cox-Exp model, having the baseline hazard rates of `r lambdas[1]`, `r lambdas[2]`, and `r lambdas[3]` and three unassociated (noise) covariates `x1`, `x2` and `x3`. 
 
@@ -193,13 +193,12 @@ To make the absolute risk calculation, in addition to the Cox models, we must sp
 
 In the following, we compute several risk predictions for the risk type corresponding to the first row of the `test` data set. The primary event is indicated by the order of the Cox models, with the first position designating the primary event.
 
-For this example, we show the syntax for estimating the absolute risk of disease between time [0, 1), for an individual with no exposures (the reference group). The projection interval is specified with the argument `interval`, which is a two-element vector. The risk profile information is given as `newdata`. 
-
+For this example, we show the syntax for estimating the absolute risk of disease between time [0, 1), for an individual with no exposures (the reference group). The projection interval is specified with the arguments `begin` and `end`. If each is a scalar, the interval is recycled for all covariate types. If a vector, each element is assumed to correspond to the projection interval of the matching row of `newdata`, the data frame with the covariate information.
 
 ```{r}
 temp <- test[1,]
 temp[1,c("x1", "x2", "x3")] <- rep(0, 3)
-coxph.risk(c(0,1), newdata=temp, cox1, cox2, cox3)
+coxph.risk(0, 1, newdata=temp, cox1, cox2, cox3)
 ```
 
 This can be compared to the analytic risk calculation for the exponential model with baseline hazard rates used to simulate the `test` data set.
@@ -211,9 +210,9 @@ cox.exp(0, 1, lambdas)
 By changing the period of risk we see how surviving to the beginning of the projection interval impacts risk.
 
 ```{r}
-coxph.risk(c(.2,1), newdata=temp, cox1, cox2, cox3)
-coxph.risk(c(.4,1), newdata=temp, cox1, cox2, cox3)
-coxph.risk(c(.6,1), newdata=temp, cox1, cox2, cox3)
+coxph.risk(.2, 1, newdata=temp, cox1, cox2, cox3)
+coxph.risk(.4, 1, newdata=temp, cox1, cox2, cox3)
+coxph.risk(.6, 1, newdata=temp, cox1, cox2, cox3)
 ```
 
 ```{r}
@@ -226,5 +225,5 @@ cox.exp(.6, 1, lambdas)
 As with `predict.glm`, we can obtain predictions for multiple individuals over a given time interval with additional rows in `newdata`. Note that the default action for handling missing variables is to apply `na.exclude` to the subset of variables included in the primary event and competing event models.
 
 ```{r}
-coxph.risk(c(0,1), test[1:5,], cox1, cox2, cox3)
+coxph.risk(0, 1, test[1:5,], cox1, cox2, cox3)
 ```
