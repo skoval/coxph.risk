@@ -10,7 +10,7 @@ Method to estimate absolute risk in the presence of multiple competing events an
 
 
 \usage{
-coxph.risk(interval, newdata, coxph1, ..., na.action = na.exclude)
+coxph.risk(begin, end, newdata, coxph1, ..., na.action = na.exclude)
 }
 
 

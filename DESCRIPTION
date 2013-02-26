@@ -2,7 +2,7 @@ Package: coxph.risk
 Type: Package
 Title: Computes absolute risk for cohort data
 Version: 0.2
-Date: 10-12-2012
+Date: 2-26-2013
 Author: Stephanie A. Kovalchik
 Maintainer: Stephanie A. Kovalchik <kovalchiksa@nih.gov>
 Description: Computes absolute risk for cohort data where the hazard model for each event follows Cox's proportional hazards

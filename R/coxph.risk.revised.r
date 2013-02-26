@@ -10,7 +10,7 @@ basehaz.coxph.risk.revised <- function(object, times){
   # WHEN START OF PROJECTION IS NOT BEFORE FIRST EVENT
   # 	ADJUST FIRST HAZARD JUMP; ONLY IMPACTS PRIMARY EVENT
   
-  H0 <- -log(summary(survfit(object), time=times[1]*.999, extend=TRUE)$surv)
+  H0 <- -log(summary(survfit(object), time=times[1]*.95, extend=TRUE)$surv)
   h <- c(H[1]-H0,diff(H))
   
 data.frame(time=times,haz=h,surv=S/S[1])
@@ -106,3 +106,53 @@ risks
 }
 	 
  
+ 
+coxph.risk.influence <- function(begin, end, newdata, coxph1, ...){
+ 
+  risk.components <- function(rr,object){
+ 	
+ 	S <- object[[1]]$surv^rr[1]
+ 	
+ 	for(i in 2:length(rr)){
+ 		S <- cbind(S, object[[i]]$surv^rr[i])
+ 	}
+
+ 	U <- apply(S,1,prod)*object[[1]]$haz*rr[1]
+ 	BetaMultipliers <- colSums(log(S)*matrix(U,nrow(S),ncol(S))) # ONE FOR EACH BETA
+ 	
+ 	list(risk= sum(U), S=S, U=U, relrisk = rr, BetaMultiplier=BetaMultipliers )	
+  }
+  
+  models <- c.coxph.risk(coxph1, ...) # COLLECT COX MODELS
+  AllVars <- unique(unlist(sapply(models, function(x) all.vars(x$formula))))
+  newdata <- subset(newdata, select = unique(AllVars))
+  which.kept <- complete.cases(newdata)
+  
+  if(!all(which.kept)){
+  	warning("Missing cases excluded.")
+  	
+  	if(length(begin)>1){
+	  	begin <- begin[which.kept]
+  		end <- end[which.kept]
+  	}
+  	
+  	newdata <- newdata[which.kept,]
+  }
+  
+  rr <- sapply(models, projection.relrisk, data = newdata) # MULTIPLE ROWS FOR EACH EVENT TYPE 
+  X <- lapply(models, function(x) model.matrix(x, data=newdata))
+  
+  if(is.matrix(rr))
+	  rr.list <- lapply(1:nrow(rr), function(x) rr[x,]) # RETURN LIST BY EACH ROW
+  else
+  	  rr.list <- list(rr)
+	
+   H <- coxph.risk.baseline(begin, end, models) # CALLS BASELINE ONCE  	
+
+list(
+		risk.components=lapply(rr.list,risk.components,object=H),
+		projection.data = X,
+		surv.object = H
+		)
+
+}
